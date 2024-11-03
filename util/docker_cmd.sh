@@ -37,12 +37,16 @@ fi
 
 # IF we are using docker on non Linux and docker-machine isn't working print an error
 # ELSE set usb_args
-if [ ! "$(uname)" = "Linux" ] && [ "$RUNTIME" = "docker" ] && ! docker-machine active >/dev/null 2>&1; then
-	errcho "Error: target requires docker-machine to work on your platform"
-	errcho "See http://gw.tnode.com/docker/docker-machine-with-usb-support-on-windows-macos"
-	exit 3
+if [ ! "$(uname)" = "Linux" ] && [ "$RUNTIME" = "docker" ]; then
+    if ! docker-machine active >/dev/null 2>&1; then
+        echo "Warning: No active docker-machine found. USB flashing will not be available."
+        echo "For USB support, see: http://gw.tnode.com/docker/docker-machine-with-usb-support-on-windows-macos"
+        usb_args=""
+    else
+        usb_args="--privileged -v /dev:/dev"
+    fi
 else
-	usb_args="--privileged -v /dev:/dev"
+    usb_args="--privileged -v /dev:/dev"
 fi
 
 qmk_firmware_dir=$(pwd -W 2>/dev/null) || qmk_firmware_dir=$PWD  # Use Windows path if on Windows
